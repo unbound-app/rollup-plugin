@@ -51,16 +51,27 @@ function hermesc(options?: { hermesc: string; }): Plugin {
 
 			await writeFile(js, output.code, 'utf-8');
 
-			await new Promise((resolve) => {
-				const process = spawn(bin, args, { shell: true });
+			const { code, stderr } = await new Promise<{ code: number | null; stderr: string; }>((resolve, reject) => {
+				const child = spawn(bin, args, { shell: true });
 
-				process.stdout.setEncoding('utf8');
-				process.stdout.on('data', this.debug);
-				process.stdout.on('error', this.debug);
+				let stderr = '';
 
-				process.on('exit', resolve);
+				child.stdout.setEncoding('utf8');
+				child.stdout.on('data', this.debug);
+
+				child.stderr.setEncoding('utf8');
+				child.stderr.on('data', (chunk) => (stderr += chunk));
+
+				child.on('error', reject);
+				child.on('close', (code) => resolve({ code, stderr }));
 			});
 
+			if (code !== 0) {
+				const detail = stderr.trim() || `hermesc exited with code ${code}.`;
+				return this.error(`hermesc failed to compile ${name}.bundle:\n${detail}`);
+			}
+
+			if (stderr.trim()) this.warn(stderr.trim());
 
 			const asset = await readFile(bytecode);
 
