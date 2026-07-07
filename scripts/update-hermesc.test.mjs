@@ -7,8 +7,8 @@ const basePkg = {
 	name: '@unbound-app/rollup-plugin-hermes',
 	version: '1.1.2',
 	dependencies: {
-		'hermesc-94': 'npm:@unbound-mod/hermesc@1.0.1',
-		'hermesc-96': 'npm:@unbound-mod/hermesc@1.0.3',
+		'hermesc-94': 'npm:@unbound-app/hermesc@94.0.0',
+		'hermesc-96': 'npm:@unbound-app/hermesc@96.0.0',
 	},
 };
 
@@ -70,7 +70,7 @@ test('bumpPatch increments only the patch segment', () => {
 });
 
 test('no-op when held versions are unchanged: not changed, no version bump', () => {
-	const held = new Map([[96, '1.0.3'], [94, '1.0.1']]);
+	const held = new Map([[96, '96.0.0'], [94, '94.0.0']]);
 
 	const result = buildUpdatedSources({
 		previousPkgSource: pkgSource(basePkg),
@@ -85,8 +85,8 @@ test('no-op when held versions are unchanged: not changed, no version bump', () 
 });
 
 test('held versions changed: bumps patch and rewrites aliases + manifest', () => {
-	// A new bytecode bucket (97 via npm 1.0.4) appears; 94 falls off the end.
-	const held = new Map([[97, '1.0.4'], [96, '1.0.3'], [94, '1.0.1']]);
+	// A new bytecode bucket (97 via npm 97.0.0) appears; 94 falls off the end.
+	const held = new Map([[97, '97.0.0'], [96, '96.0.0'], [94, '94.0.0']]);
 
 	const result = buildUpdatedSources({
 		previousPkgSource: pkgSource(basePkg),
@@ -100,15 +100,15 @@ test('held versions changed: bumps patch and rewrites aliases + manifest', () =>
 	const nextPkg = JSON.parse(result.nextPkgSource);
 	assert.equal(nextPkg.version, '1.1.3');
 	assert.deepEqual(nextPkg.dependencies, {
-		'hermesc-94': 'npm:@unbound-mod/hermesc@1.0.1',
-		'hermesc-96': 'npm:@unbound-mod/hermesc@1.0.3',
-		'hermesc-97': 'npm:@unbound-mod/hermesc@1.0.4',
+		'hermesc-94': 'npm:@unbound-app/hermesc@94.0.0',
+		'hermesc-96': 'npm:@unbound-app/hermesc@96.0.0',
+		'hermesc-97': 'npm:@unbound-app/hermesc@97.0.0',
 	});
 	assert.equal(result.nextManifestSource, manifestSource([97, 96, 94]));
 });
 
 test('missing previous manifest counts as changed', () => {
-	const held = new Map([[96, '1.0.3'], [94, '1.0.1']]);
+	const held = new Map([[96, '96.0.0'], [94, '94.0.0']]);
 
 	const result = buildUpdatedSources({
 		previousPkgSource: pkgSource(basePkg),
