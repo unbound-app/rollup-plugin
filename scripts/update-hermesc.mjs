@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Inspects every published version of @unbound-mod/hermesc, groups them by the
+// Inspects every published version of @unbound-app/hermesc, groups them by the
 // actual HBC bytecode version their binaries emit (not their npm semver, which
 // is unrelated), and keeps the newest npm version for each of the last N
 // distinct bytecode versions. package.json is updated to alias each held
@@ -11,7 +11,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const PACKAGE_NAME = '@unbound-mod/hermesc';
+const PACKAGE_NAME = '@unbound-app/hermesc';
 const HELD_VERSIONS = 3;
 const ALIAS_PREFIX = 'hermesc-';
 
