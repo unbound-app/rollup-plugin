@@ -38,7 +38,7 @@ async function fetchPublishedVersions() {
 	return Object.keys(data.versions).sort(compareSemver);
 }
 
-function getBytecodeVersion(npmVersion) {
+export function getBytecodeVersion(npmVersion) {
 	const workDir = mkdtempSync(join(tmpdir(), 'hermesc-'));
 
 	try {
@@ -62,8 +62,13 @@ function getBytecodeVersion(npmVersion) {
 	}
 }
 
-async function main() {
-	const versions = await fetchPublishedVersions();
+// Walks candidate npm versions newest-first, deriving each one's real bytecode
+// version, and keeps the newest npm version per distinct bucket up to
+// HELD_VERSIONS. A candidate whose binary can't be inspected fails the run
+// loudly instead of being skipped - a silent skip could drop a bytecode version
+// that should have been held. Pure over its injected `getBytecodeVersion` so the
+// selection logic is testable without touching npm/the network.
+export function selectHeldVersions({ versions, getBytecodeVersion }) {
 	const held = new Map(); // bytecodeVersion -> npmVersion, newest npm version wins per bucket
 
 	for (const npmVersion of versions) {
@@ -73,14 +78,20 @@ async function main() {
 		try {
 			bytecodeVersion = getBytecodeVersion(npmVersion);
 		} catch (e) {
-			console.warn(`Skipping ${npmVersion}: ${e.message}`);
-			continue;
+			throw new Error(`Could not inspect hermesc ${npmVersion}: ${e.message}. Refusing to drop a bytecode version silently.`, { cause: e });
 		}
 
 		if (!held.has(bytecodeVersion)) held.set(bytecodeVersion, npmVersion);
 	}
 
 	if (held.size === 0) throw new Error('Could not determine the bytecode version of any published hermesc release.');
+
+	return held;
+}
+
+async function main() {
+	const versions = await fetchPublishedVersions();
+	const held = selectHeldVersions({ versions, getBytecodeVersion });
 
 	const heldVersions = [...held.keys()].sort((a, b) => b - a);
 
@@ -116,7 +127,10 @@ async function main() {
 	}
 }
 
-main().catch((e) => {
-	console.error(e);
-	process.exit(1);
-});
+// Only run when invoked directly, so tests can import the pure helpers above.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+	main().catch((e) => {
+		console.error(e);
+		process.exit(1);
+	});
+}

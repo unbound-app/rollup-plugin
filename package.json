@@ -5,6 +5,7 @@
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "swc src -d dist -D --delete-dir-on-start --strip-leading-paths",
+		"test": "node --test",
 		"update-hermesc": "node scripts/update-hermesc.mjs"
 	},
 	"files": [
