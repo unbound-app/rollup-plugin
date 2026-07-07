@@ -4,10 +4,12 @@
 	"description": "Compile JavaScript bundles to hermes binaries.",
 	"main": "dist/index.js",
 	"scripts": {
-		"build": "swc src -d dist -D --delete-dir-on-start --strip-leading-paths"
+		"build": "swc src -d dist -D --delete-dir-on-start --strip-leading-paths",
+		"update-hermesc": "node scripts/update-hermesc.mjs"
 	},
 	"files": [
-		"dist/index.js"
+		"dist/index.js",
+		"hermesc-versions.json"
 	],
 	"publishConfig": {
 		"access": "public"
@@ -21,6 +23,7 @@
 		"rollup": "^4.21.0"
 	},
 	"dependencies": {
-		"@unbound-mod/hermesc": "^1.0.1"
+		"hermesc-94": "npm:@unbound-mod/hermesc@1.0.1",
+		"hermesc-96": "npm:@unbound-mod/hermesc@1.0.3"
 	}
 }
