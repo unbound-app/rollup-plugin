@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import { selectHeldVersions, buildUpdatedSources, bumpPatch } from './update-hermesc.mjs';
 
 const basePkg = {
-	name: '@unbound-app/rollup-plugin',
+	name: '@unbound-app/rollup-plugin-hermes',
 	version: '1.1.2',
 	dependencies: {
 		'hermesc-94': 'npm:@unbound-mod/hermesc@1.0.1',
