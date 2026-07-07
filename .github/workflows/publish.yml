@@ -1,0 +1,48 @@
+name: Publish
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - package.json
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - run: bun run build
+
+      # Publish only when package.json's version differs from what's on npm.
+      # This is the idempotency / loop guard: unrelated pushes and replayed
+      # events (version already published) skip cleanly.
+      - name: Publish gate
+        id: gate
+        run: node scripts/publish-gate.mjs
+
+      - name: Publish to npm
+        if: steps.gate.outputs.publish == 'true'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # Wake the downstream consumer only after a real publish. A skipped publish
+      # (unchanged version) leaves no dispatch.
+      - name: Notify unbound of new release
+        if: steps.gate.outputs.publish == 'true'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.UNBOUND_DISPATCH_TOKEN }}
+          repository: marioparaschiv/unbound
+          event-type: rollup-plugin-updated
