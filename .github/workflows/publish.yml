@@ -9,13 +9,17 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    permissions:
+      # OIDC token for npm trusted publishing (no NPM_TOKEN needed).
+      id-token: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           registry-url: https://registry.npmjs.org
 
       - uses: oven-sh/setup-bun@v2
@@ -31,11 +35,10 @@ jobs:
         id: gate
         run: node scripts/publish-gate.mjs
 
+      # Authenticated via OIDC trusted publishing; requires npm >= 11.5.1 (node 24 ships it).
       - name: Publish to npm
         if: steps.gate.outputs.publish == 'true'
         run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       # Wake the downstream consumer only after a real publish. A skipped publish
       # (unchanged version) leaves no dispatch.
