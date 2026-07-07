@@ -10,6 +10,13 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      # Required for npm trusted publishing (OIDC): mints the short-lived token
+      # npm uses to authenticate this workflow, so no long-lived NPM_TOKEN and no
+      # 2FA/OTP prompt. Also lets npm attach build provenance.
+      id-token: write
+      contents: read
+
     steps:
       - uses: actions/checkout@v4
 
@@ -19,6 +26,9 @@ jobs:
           registry-url: https://registry.npmjs.org
 
       - uses: oven-sh/setup-bun@v2
+
+      # Trusted publishing needs npm >= 11.5.1; node 20 ships an older npm.
+      - run: npm install -g npm@latest
 
       - run: bun install
 
@@ -33,9 +43,7 @@ jobs:
 
       - name: Publish to npm
         if: steps.gate.outputs.publish == 'true'
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance
 
       # Wake the downstream consumer only after a real publish. A skipped publish
       # (unchanged version) leaves no dispatch.
